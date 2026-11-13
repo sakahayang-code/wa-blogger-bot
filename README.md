@@ -1,144 +1,118 @@
-# 🤖 WhatsApp AI Blogger Auto-Post Bot (Python)
+# 🤖 WhatsApp AI Blogger Bot (Termux Android)
 
-Bot WhatsApp otomatis berbasis **Python** dan **Google Gemini Flash AI** untuk menghasilkan artikel blog berkualitas tinggi, lengkap dengan gambar thumbnail otomatis, dan langsung diterbitkan ke blog Blogger/Blogspot ber-template **Median UI**.
-
----
-
-## 🌟 Fitur Utama
-
-* **🚫 Tanpa Node.js:** 100% Python murni (FastAPI), sangat ringan, efisien, dan hemat RAM.
-* **⚡ Aktif 24 Jam Penuh (Gratis):** Didesain khusus agar bisa di-deploy gratis 24 jam non-stop di cloud (Render, Koyeb, atau VPS) langsung dari repositori GitHub Anda.
-* **🎨 Dioptimalkan Khusus untuk Template Median UI:**
-  * Menghasilkan struktur HTML rapi (`<h2>`, `<h3>`, `<p>`, `<ul>`, `<ol>`).
-  * Menyertakan kotak alert tips khas Median UI (`<div class="alert alert-info">`).
-  * Menyertakan blok Tanya Jawab (FAQ) terstruktur.
-* **🖼️ Thumbnail Otomatis:**
-  * Men-generate gambar ilustrasi 16:9 beresolusi tinggi menggunakan **Google Imagen 3** (dengan fallback cerdas).
-  * Gambar disisipkan di baris paling atas artikel, sehingga tema Median UI otomatis mengenali dan memasangnya sebagai **Featured Thumbnail / Cover** di beranda blog.
-* **🔒 Bebas Masalah Token Expired:**
-  * Memanfaatkan fitur resmi **Mail-to-Blogger** via SMTP Gmail. Sekali setup, berjalan selamanya tanpa perlu memperbarui Google Cloud OAuth token setiap beberapa hari.
-* **🛡️ Fitur Keamanan Owner:**
-  * Anda bisa mengunci bot agar hanya nomor WhatsApp Anda yang bisa memerintahkan penulisan artikel (`OWNER_NUMBER`).
+Bot otomatis berbasis **Python** dan **Google Gemini Flash AI** yang berjalan langsung di ponsel **Android via Termux** (tanpa Node.js, tanpa Render, dan tanpa Fonnte). Bot ini secara otomatis menghasilkan artikel SEO lengkap, membuat gambar thumbnail 16:9, dan langsung menerbitkannya ke blog Blogger dengan template **Median UI**.
 
 ---
 
-## 🏗️ Struktur Proyek
+## 🌟 Keunggulan Versi Termux Android
 
-```
-wa-blogger-bot/
-├── config.py                 # Pengaturan konfigurasi & environment variable
-├── main.py                   # Server FastAPI, endpoint webhook WA & background task
-├── services/
-│   ├── gemini_service.py     # Generator artikel SEO & thumbnail Imagen 3
-│   ├── blogger_service.py    # Pengirim postingan ke Blogger via SMTP
-│   └── whatsapp_service.py   # Pengirim balasan notifikasi ke WhatsApp
-├── requirements.txt          # Dependensi Python
-├── Procfile                  # Konfigurasi start server di Render/Railway
-├── render.yaml               # Blueprint auto-deploy 1-klik di Render.com
-├── Dockerfile                # Opsi deploy container
-├── .env.example              # Template variabel konfigurasi
-└── README.md                 # Dokumentasi panduan lengkap
+* **🚫 Tanpa Node.js & Tanpa Render:** Berjalan 100% lokal di HP Android Anda menggunakan Python.
+* **📱 Tanpa Gateway Pihak Ketiga (Bebas Fonnte):** Menggunakan aplikasi jembatan lokal Android (**AutoResponder for WA** / **MacroDroid**) yang terhubung ke `http://localhost:8000`.
+* **🔒 100% Aman & Anti-Banned:** Tidak membajak socket WhatsApp, melainkan membaca & merespons pesan secara resmi via sistem notifikasi Android.
+* **🎨 Khusus Template Median UI:** Artikel berformat tag HTML rapi, alert box info, FAQ item, dan thumbnail otomatis terpasang sebagai *Featured Image / Cover*.
+* **⚡ 2 Mode Penggunaan:**
+  1. **Mode WhatsApp:** Cukup kirim chat `!tulis <topik>` dari HP.
+  2. **Mode Perintah Termux (CLI):** Ketik langsung `python post.py "topik artikel"` di Termux.
+
+---
+
+## 🛠️ Panduan Instalasi di Termux Android
+
+### 1. Persiapan Termux
+> ⚠️ **PENTING:** Unduh Termux dari [F-Droid](https://f-droid.org/en/packages/com.termux/) (versi Play Store sudah usang dan sering error saat install paket).
+
+Buka aplikasi Termux di HP Android Anda, lalu ketik perintah berikut:
+```bash
+pkg update && pkg upgrade -y
+pkg install python git -y
 ```
 
----
+### 2. Unduh Repositori Bot
+```bash
+git clone https://github.com/sakahayang-code/wa-blogger-bot.git
+cd wa-blogger-bot
+```
 
-## 🚀 Panduan Setup Langkah Demi Langkah
+### 3. Pasang Dependensi Python
+```bash
+pip install -r requirements.txt
+```
 
-### Langkah 1: Dapatkan Google Gemini API Key
-1. Buka [Google AI Studio](https://aistudio.google.com/).
-2. Masuk dengan akun Google Anda.
-3. Klik tombol **Get API key** > **Create API key**.
-4. Salin kunci API yang didapatkan (awalan `AIzaSy...`).
+### 4. Atur Konfigurasi `.env`
+Salin template konfigurasi:
+```bash
+cp .env.example .env
+nano .env
+```
+Isi konfigurasi Anda:
+* `GEMINI_API_KEY`: Dapatkan gratis di [Google AI Studio](https://aistudio.google.com/).
+* `GEMINI_MODEL`: `gemini-2.5-flash`
 
-### Langkah 2: Aktifkan Fitur Mail-to-Blogger
-1. Buka dashboard [Blogger](https://www.blogger.com/).
-2. Masuk ke menu **Setelan (Settings)** > scroll ke bawah ke bagian **Email**.
-3. Klik **Publikasikan postingan menggunakan email**.
-4. Pilih opsi **Publikasikan email segera** (atau *Simpan email sebagai draf* jika Anda ingin meninjaunya dulu sebelum terbit).
-5. Masukkan kata kunci rahasia (contoh: `artikelku123`).
-6. Alamat email Blogger Anda akan menjadi: `namabloganda.artikelku123@blogger.com`. Simpan alamat ini untuk variabel `BLOGGER_EMAIL`.
+#### Mengatur Akses ke Blogger (Pilih salah satu metode):
+* **Metode A (Mail-to-Blogger - Paling Simpel):**
+  * `BLOGGER_EMAIL`: Alamat email rahasia Blogger Anda (lihat solusi di bawah jika sebelumnya tidak bisa di-save).
+  * `GMAIL_USER`: Email Gmail Anda.
+  * `GMAIL_APP_PASSWORD`: Sandi aplikasi 16 karakter dari [Google App Passwords](https://myaccount.google.com/apppasswords).
+* **Metode B (Google Blogger API v3 Resmi):**
+  * `BLOGGER_BLOG_ID`: ID angka blog Anda (ada di URL dashboard Blogger).
+  * Letakkan file `service_account.json` dari Google Cloud Console di dalam folder `wa-blogger-bot`.
 
-### Langkah 3: Buat Password Aplikasi Gmail (App Password)
-Agar bot bisa mengirim email ke alamat Blogger di atas dengan aman:
-1. Masuk ke [Keamanan Akun Google](https://myaccount.google.com/security).
-2. Pastikan **Verifikasi 2 Langkah (2FA)** di akun Google Anda sudah AKTIF.
-3. Buka halaman [Sandi Aplikasi (App Passwords)](https://myaccount.google.com/apppasswords).
-4. Buat sandi baru:
-   * Nama aplikasi: `Blogger Bot`
-5. Google akan memberikan **16 karakter kode sandi** (misal: `abcd efgh ijkl mnop`). Simpan ini untuk `GMAIL_APP_PASSWORD`.
-
-### Langkah 4: Siapkan WhatsApp Gateway (Fonnte - Gratis)
-1. Buka [Fonnte.com](https://fonnte.com/) dan daftar akun gratis.
-2. Di dashboard Fonnte, scan QR Code menggunakan WhatsApp di ponsel Anda (*Perangkat Tertaut*).
-3. Salin **API Token Fonnte** Anda untuk variabel `FONNTE_TOKEN`.
-
----
-
-## ☁️ Cara Deploy 24 Jam Non-Stop di Render.com (Gratis)
-
-1. **Push proyek ini ke Repositori GitHub Anda:**
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit bot wa blogger"
-   git remote add origin https://github.com/USERNAME_ANDA/NAMA_REPO.git
-   git push -u origin main
-   ```
-2. Buka [Render.com](https://render.com/) dan klik **Sign In with GitHub**.
-3. Klik tombol **New +** > pilih **Web Service**.
-4. Pilih repositori GitHub Anda tadi.
-5. Konfigurasi dasar:
-   * **Name:** `wa-blogger-bot`
-   * **Language:** `Python 3`
-   * **Region:** `Singapore` (Paling cepat dari Indonesia)
-   * **Branch:** `main`
-   * **Build Command:** `pip install -r requirements.txt`
-   * **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
-   * **Instance Type:** `Free`
-6. Scroll ke bawah ke bagian **Environment Variables** dan tambahkan:
-   * `GEMINI_API_KEY` : (API Key dari Langkah 1)
-   * `GEMINI_MODEL` : `gemini-2.5-flash`
-   * `BLOGGER_EMAIL` : (Email rahasia Blogger dari Langkah 2)
-   * `GMAIL_USER` : (Alamat email Gmail Anda)
-   * `GMAIL_APP_PASSWORD` : (Sandi aplikasi 16 karakter dari Langkah 3)
-   * `FONNTE_TOKEN` : (Token dari Langkah 4)
-   * `OWNER_NUMBER` : `628xxxxxxxxxx` (Nomor WhatsApp Anda, tanpa +)
-7. Klik **Create Web Service**.
-8. Dalam 1-2 menit, Render akan memberikan URL publik untuk bot Anda (misal: `https://wa-blogger-bot-xxxx.onrender.com`).
-
-### Langkah 5: Pasang Webhook di Fonnte
-1. Kembali ke dashboard [Fonnte.com](https://fonnte.com/).
-2. Masuk ke menu **Device** > pilih perangkat Anda.
-3. Di kolom **Webhook URL**, masukkan URL dari Render tadi ditambah `/webhook`:
-   ```
-   https://wa-blogger-bot-xxxx.onrender.com/webhook
-   ```
-4. Simpan pengaturan. Selesai! Bot Anda sekarang online 24 jam non-stop!
+*(Tekan `CTRL + X`, lalu tekan `Y`, lalu `Enter` untuk menyimpan di editor nano).*
 
 ---
 
-## 📱 Cara Menggunakan dari WhatsApp
+## 📱 Cara Menghubungkan ke WhatsApp di Android (Tanpa Fonnte)
 
-Kirim pesan ke nomor WhatsApp yang terhubung:
+Agar bot merespons pesan WhatsApp Anda secara otomatis:
 
-| Perintah | Fungsi | Contoh |
-| :--- | :--- | :--- |
-| `!tulis <topik>` | Otomatis membuat & memposting artikel + thumbnail | `!tulis cara merawat baterai smartphone agar awet bertahun-tahun` |
-| `!status` | Mengecek apakah server online dan koneksi Blogger siap | `!status` |
-| `!menu` | Menampilkan panduan dan petunjuk perintah | `!menu` |
-
----
-
-## 🧪 Menguji Secara Lokal (Opsional di Laptop/PC)
-
-1. Salin `.env.example` menjadi `.env` lalu lengkapi isinya:
-   ```bash
-   cp .env.example .env
-   ```
-2. Jalankan server lokal:
+1. Di ponsel Android Anda, pasang aplikasi gratis **AutoResponder for WA** (dari Google Play Store).
+2. Buka AutoResponder for WA dan beri izin akses notifikasi.
+3. Buat Aturan Baru (klik tanda **+**):
+   * **Pesan yang diterima:** Pilih *Pola kecocokan* atau *Berisi*, lalu masukkan: `!tulis *`
+   * Scroll ke bawah ke bagian **Hubungkan Webserver (Connect Webserver / Webhook)**:
+     * Aktifkan toggle Webhook.
+     * **URL:** `http://localhost:8000/webhook?sync=true`
+     * **Metode HTTP:** `POST`
+     * **Header:** `Content-Type: application/json`
+     * **Body (JSON):**
+       ```json
+       {"sender": "%sender%", "message": "%message%"}
+       ```
+4. Simpan aturan tersebut.
+5. Jalankan server bot di Termux:
    ```bash
    python main.py
-   # atau
-   uvicorn main:app --reload --port 8000
    ```
-3. Buka browser di `http://localhost:8000/docs` untuk mencoba test endpoint `/manual-post` secara langsung.
+6. **Selesai!** Sekarang setiap kali ada pesan WhatsApp masuk diawali `!tulis <topik>`, Termux akan langsung meracik artikel SEO + thumbnail dan menerbitkannya ke blog Anda, lalu AutoResponder langsung mengirim balasan sukses ke chat WhatsApp!
+
+---
+
+## 💻 Cara Menggunakan Langsung dari Termux (Tanpa WhatsApp)
+
+Jika Anda sedang membuka Termux dan ingin langsung memposting artikel tanpa lewat WhatsApp, cukup ketik:
+
+```bash
+python post.py "7 tips merawat laptop agar tidak cepat panas"
+```
+
+Bot akan langsung:
+1. Menulis artikel lengkap dengan Google Gemini Flash.
+2. Membuat gambar thumbnail 16:9.
+3. Menerbitkannya ke Blogger (Median UI).
+4. Menampilkan status sukses di layar terminal Termux.
+
+---
+
+## 💡 Solusi: "Blogger Email Tidak Bisa di Save"
+
+Jika sebelumnya Anda mengalami tombol *Simpan* di menu **Publikasikan postingan menggunakan email** Blogger tidak berfungsi, ikuti aturan ketat dari Google ini:
+
+1. **Kata Rahasia Hanya Huruf Kecil & Angka:**
+   * ❌ *Salah:* `Artikel_Ku!`, `Post 2025`, `admin`
+   * ✅ *Benar:* `post8899xyz`, `artikel77auto`, `botwa123`
+2. **Pilihan Radio Button:**
+   * Pastikan Anda mengklik radio button **Publikasikan email segera** (jangan biarkan di opsi *Dinonaktifkan*).
+3. **Panjang Karakter:**
+   * Minimal 4 sampai 8 karakter.
+4. **Coba di Tab Incognito:**
+   * Jika masih gagal, buka `blogger.com` di Chrome mode Incognito (seringkali ekstensi browser memblokir script popup Google).
