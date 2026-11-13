@@ -1,32 +1,38 @@
 import os
-from dotenv import load_dotenv
 
-# Membaca environment variable dari file .env (jika ada)
-load_dotenv()
+# Safe .env loader: Bekerja meskipun python-dotenv belum terpasang
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    if os.path.exists(".env"):
+        with open(".env", "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, val = line.split("=", 1)
+                    val = val.strip().strip("'\"")
+                    os.environ.setdefault(key.strip(), val)
 
 class Config:
-    # Port untuk server FastAPI
     PORT = int(os.getenv("PORT", 8000))
     
-    # Google Gemini API
+    # Gemini AI
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-    # Model default, jika custom 'gemini-3.8-flash-high' belum tersedia publik di endpoint akun,
-    # sistem otomatis fallback ke 'gemini-2.5-flash' atau 'gemini-2.0-flash'
     GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     
-    # Mail-to-Blogger Credentials
-    # Didapat dari: Dashboard Blogger -> Setelan -> Email -> "Publikasikan postingan menggunakan email"
+    # Blogger Email (Mail-to-Blogger)
     BLOGGER_EMAIL = os.getenv("BLOGGER_EMAIL", "")
-    
-    # Akun Gmail pengirim & Google App Password (16 digit)
     GMAIL_USER = os.getenv("GMAIL_USER", "")
     GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "")
     
-    # WhatsApp Gateway (Fonnte / Wablas)
+    # Blogger API v3 (Alternatif jika email tidak bisa di-save)
+    BLOGGER_BLOG_ID = os.getenv("BLOGGER_BLOG_ID", "")
+    
+    # WhatsApp Gateway (Opsional jika pakai Fonnte)
     FONNTE_TOKEN = os.getenv("FONNTE_TOKEN", "")
     
-    # Nomor WhatsApp Owner yang diizinkan (opsional untuk keamanan)
-    # Kosongkan jika ingin bisa dipakai oleh nomor manapun
+    # Nomor WhatsApp Owner
     OWNER_NUMBER = os.getenv("OWNER_NUMBER", "")
 
 config = Config()

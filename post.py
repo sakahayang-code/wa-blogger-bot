@@ -10,10 +10,9 @@ Cara pakai:
 
 import sys
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
-
+# Membaca konfigurasi (otomatis membaca .env)
+from config import config
 from services.gemini_service import gemini_service
 from services.blogger_service import blogger_service
 
@@ -28,7 +27,7 @@ def main():
 
     topic = " ".join(sys.argv[1:])
     print(f"\n🚀 [TERMUX] Memulai pembuatan artikel untuk topik: '{topic}'")
-    print("⏳ Menghubungi Google Gemini Flash AI...")
+    print(f"⏳ Menghubungi Google Gemini Flash AI (Model: {config.GEMINI_MODEL})...")
 
     try:
         # 1. Generate Artikel
@@ -46,7 +45,7 @@ def main():
         print("\n🎨 Membuat thumbnail 16:9 (Imagen 3 / Fallback)...")
         image_info = gemini_service.generate_thumbnail(image_prompt, topic)
         if image_info.get("bytes"):
-            print("✅ Thumbnail Imagen 3 berhasil dibuat (Binary Image)!")
+            print("✅ Thumbnail Imagen 3 berhasil dibuat!")
         else:
             print(f"✅ Menggunakan Thumbnail URL: {image_info.get('url')[:60]}...")
 
